@@ -12,7 +12,7 @@ void setup()
   sparki.gripperStop();
 }
 
-int state = 1;
+int state = SEARCH;
 void loop() {
   int threshold  = 500; //For line sensors
   bool edgeLeft   = sparki.edgeLeft() < threshold;   // measure the left edge IR sensor
@@ -27,7 +27,8 @@ void loop() {
   if (state == 1) sparki.print("SEARCH");
   else if (state == 2) sparki.print("FOLLOW");
   else if (state == 3) sparki.print("STOP");
-  else sparki.print("ALIGN");
+  else if (state == 4) sparki.print("ALIGN");
+  else sparki.print("ERROR");
   sparki.updateLCD();
 
   switch (state) {
@@ -44,7 +45,7 @@ void loop() {
             sparki.moveForward(cm + 1); // move to the object
             delay(2500);
             sparki.gripperClose();
-            delay(3000);
+            delay(5000);
             sparki.gripperStop();
             delay(100);
             sparki.moveRight(180);
@@ -55,20 +56,21 @@ void loop() {
       }
 
     case ALIGN: {
-        if (edgeLeft && lineCenter) {
-          sparki.moveRight(80);
-          delay(3000);
-        }
-        
-        if (edgeRight && lineCenter) {
-          sparki.moveLeft(80);
-          delay(3000);
-        }
-
-        else if (lineCenter){
+        if (lineLeft  && lineRight) {
+          sparki.moveForward(3);
+          sparki.moveRight(90);
+          delay(100);
           state = FOLLOW;
         }
+ 
+        
+        else if (lineRight || lineCenter || lineLeft) {
+          
+          state = FOLLOW;
+        }
+
         else sparki.moveForward();
+        break;
       }
 
     case FOLLOW: {
@@ -85,7 +87,7 @@ void loop() {
           sparki.moveForward(); // move forward
         }
 
-        if ( (edgeRight && lineCenter) || (edgeLeft && lineCenter) ) {
+        if ( lineCenter && lineRight && lineLeft ) {
           state = STOP;
         }
 
@@ -98,8 +100,9 @@ void loop() {
         delay(4000);
 
         while (1) {
-          sparki.beep();
-          delay(1500);
+          //sparki.beep();
+          sparki.moveRight();
+
         }
       }
   }
